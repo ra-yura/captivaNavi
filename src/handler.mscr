@@ -1,0 +1,42 @@
+Include("utils.mscr")
+
+Global(logFileName )
+Global(logEnabled )
+Global(naviName)
+Global(naviPath)
+
+debug = "true" eq ToLower(IniRead( "navi.ini", "debug", "debug" ))
+
+logFileName = "handler.log"
+logEnabled = IniRead( "navi.ini", "config", "logEnabled" )
+handlerTimeout = 0 + IniRead( "navi.ini", "config", "handlerTimeout" )
+
+@InitNaviArray()
+
+# main loop
+timeout = TimeStamp()
+lastActiveProc = ToLower(ActiveProcess())
+while ((handlerTimeout <= 0) || ((TimeStamp() - timeout) < handlerTimeout ) )
+  activeProc = ToLower(ActiveProcess())
+  if( lastActiveProc ne activeProc )
+    @Log( "last changed: " & lastActiveProc & " cur: " & activeProc & ";" & ActiveWindow() )
+    lastActiveProc = activeProc
+    originProc = @GetProcessName(naviPath[1])
+    @Log( " activeProc: " & activeProc )
+    @Log( " originProc: " & originProc )
+    If ( Find(activeProc, originProc) > 0 )
+      @Log("navi call found")
+      customNaviWindow = @SearchCustomNavi()
+      @Log("customNaviWindow " & customNaviWindow)
+      If( customNaviWindow ne 0 ) 
+	originWindow = @FindProcWindow( @GetProcessName(originProc) )
+	If( originWindow ne 0 ) 
+	  @GotoOriginMenu( originWindow )
+	EndIf
+	@ActivateWindow( customNaviWindow )
+      EndIf
+    EndIf
+  EndIf
+  Sleep(50)
+EndWhile
+Exit
